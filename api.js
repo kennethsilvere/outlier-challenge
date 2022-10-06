@@ -1,4 +1,5 @@
 const knex = require('./db')
+const request = require('request')
 
 module.exports = {
   getHealth,
@@ -18,7 +19,15 @@ async function getHealth (req, res, next) {
 }
 
 async function getStudent (req, res, next) {
-  throw new Error('This method has not been implemented yet.')
+  try {
+    const studentsList = await knex('students')
+      .select()
+      .where('id', req.params.id)
+    return res.json(studentsList)
+  } catch (e) {
+    console.log(e)
+    res.status(500).end()
+  }
 }
 
 async function getStudentGradesReport (req, res, next) {
