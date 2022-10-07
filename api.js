@@ -41,7 +41,12 @@ async function getStudentGradesReport(req, res, next) {
 }
 
 async function getCourseGradesReport(req, res, next) {
-	throw new Error('This method has not been implemented yet.')
+	try {
+		return getCourseStatistics(res)
+	} catch (e) {
+		console.log(e)
+		return res.status(500).end()
+	}
 }
 
 async function getStudentDataById(id) {
@@ -70,5 +75,43 @@ async function mergeWithCourseGradesFromRemoteSource(
 				course_grades: courseGrades
 			}
 			return res.status(200).json(studentDataWithGrades)
+		})
+}
+
+async function getCourseStatistics(res) {
+	const courses = {}
+
+	request('https://outlier-coding-test-data.netlify.app/grades.json')
+		.pipe(JSONStream.parse('*'))
+		.on('data', (d) => {
+			const courseName = d.course
+			if (!courses[courseName]) {
+				courses[courseName] = {
+					highestGrade: +d.grade,
+					lowestGrade: +d.grade,
+					averageGrade: {
+						count: 0,
+						...d
+					}
+				}
+			}
+
+			if (courses[courseName].highestGrade < +d.grade) {
+				courses[courseName].highestGrade = +d.grade
+			}
+			if (courses[courseName].lowestGrade > +d.grade) {
+				courses[courseName].lowestGrade = +d.grade
+			}
+			courses[courseName].averageGrade.grade += +d.grade
+			courses[courseName].averageGrade.count++
+		})
+		.on('end', () => {
+			for (const key of Object.keys(courses)) {
+				courses[key].averageGrade = +(
+					courses[key].averageGrade.grade /
+					courses[key].averageGrade.count
+				).toFixed(2)
+			}
+			return res.status(200).json(courses)
 		})
 }
