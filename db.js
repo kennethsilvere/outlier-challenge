@@ -13,4 +13,6 @@ if (!knex) {
 
 let rawdata = fs.readFileSync('grades.json')
 let grades = JSON.parse(rawdata)
-module.exports = { knex, grades }
+let destroy = () => knex.destroy()
+
+module.exports = { knex, grades, destroy }

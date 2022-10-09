@@ -12,7 +12,7 @@ workerData.forEach((d) => {
 })
 
 for (const key of Object.keys(courses)) {
-	courses[key].sort((a, b) => +a.grade - +b.grade)
+	courses[key].sort((a, b) => +b.grade - +a.grade)
 	courseStatistics[key] = {
 		highestGrade: courses[key][0].grade,
 		lowestGrade: courses[key][courses[key].length - 1].grade,

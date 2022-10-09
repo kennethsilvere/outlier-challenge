@@ -9,9 +9,12 @@ module.exports = {
 }
 
 let result
-runService(grades).then((r) => {
-	result = r
-})
+
+if (!result) {
+	runService(grades).then((r) => {
+		result = r
+	})
+}
 
 async function getHealth(req, res, next) {
 	try {
@@ -45,7 +48,14 @@ async function getStudentGradesReport(req, res, next) {
 }
 
 async function getCourseGradesReport(req, res, next) {
-	return res.status(200).json(result)
+	if (!result) {
+		runService(grades).then((r) => {
+			result = r
+			return res.status(200).json(result)
+		})
+	} else {
+		return res.status(200).json(result)
+	}
 }
 
 async function getStudentDataById(id) {
