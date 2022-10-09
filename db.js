@@ -1,13 +1,16 @@
+const fs = require('fs')
 let knex
 
 if (!knex) {
-  knex = require('knex')({
-    client: 'sqlite3',
-    connection: {
-      filename: './students.db'
-    },
-    useNullAsDefault: true
-  })
+	knex = require('knex')({
+		client: 'sqlite3',
+		connection: {
+			filename: './students.db'
+		},
+		useNullAsDefault: true
+	})
 }
 
-module.exports = knex
+let rawdata = fs.readFileSync('grades.json')
+let grades = JSON.parse(rawdata)
+module.exports = { knex, grades }
