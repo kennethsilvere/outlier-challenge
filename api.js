@@ -1,5 +1,5 @@
 const { knex, grades } = require('./db')
-const { Worker } = require('worker_threads')
+// const { Worker } = require('worker_threads')
 
 module.exports = {
   getHealth,
@@ -8,13 +8,7 @@ module.exports = {
   getCourseGradesReport
 }
 
-let result
-
-if (!result) {
-  runService(grades).then((r) => {
-    result = r
-  })
-}
+let courses
 
 async function getHealth (req, res, next) {
   try {
@@ -48,14 +42,17 @@ async function getStudentGradesReport (req, res, next) {
 }
 
 async function getCourseGradesReport (req, res, next) {
-  if (!result) {
-    runService(grades).then((r) => {
-      result = r
-      return res.status(200).json(result)
+  courses = grades.reduce((group, courseItem) => {
+    const { course } = courseItem
+    group[course] = group[course] ?? []
+    group[course].push(courseItem)
+    return group
+  }, {})
+  setImmediate(() => {
+    return processStatistics().then((d) => {
+      return res.status(200).json(d)
     })
-  } else {
-    return res.status(200).json(result)
-  }
+  })
 }
 
 async function getStudentDataById (id) {
@@ -63,7 +60,7 @@ async function getStudentDataById (id) {
   return studentData[0]
 }
 
-async function mergeWithCourseGradesFromRemoteSource(
+async function mergeWithCourseGradesFromRemoteSource (
   idFromDB,
   studentData,
   res
@@ -85,13 +82,28 @@ async function mergeWithCourseGradesFromRemoteSource(
   return res.status(200).json(studentDataWithGrades)
 }
 
-function runService (workerData) {
+function processStatistics () {
+  const courseStatistics = {}
+  function getAverage (courses) {
+    const courseGrades = courses.map((c) => +c.grade)
+    const total = courseGrades.reduce((partialSum, a) => partialSum + a, 0)
+    const avg = (total / courses.length).toFixed(2)
+    return +avg
+  }
   return new Promise((resolve, reject) => {
-    const worker = new Worker('./worker.js', { workerData })
-    worker.on('message', resolve)
-    worker.on('error', reject)
-    worker.on('exit', (code) => {
-      if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`))
-    })
+    for (let i = 0; i < Object.keys(courses).length; i++) {
+      const key = Object.keys(courses)[i]
+      setTimeout(() => {
+        courses[key].sort((a, b) => +b.grade - +a.grade)
+        courseStatistics[key] = {
+          highestGrade: courses[key][0].grade,
+          lowestGrade: courses[key][courses[key].length - 1].grade,
+          averageGrade: getAverage(courses[key])
+        }
+      }, 0)
+    }
+    setTimeout(() => {
+      resolve(courseStatistics)
+    }, 0)
   })
 }
