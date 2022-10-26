@@ -21,6 +21,9 @@ async function getHealth (req, res, next) {
 async function getStudent (req, res, next) {
   try {
     const studentData = await getStudentDataById(req.params.id)
+    if (!studentData) {
+      return res.status(404).json({ error: 'Student does not exit' })
+    }
     delete studentData.password_hash
     return res.status(200).json(studentData)
   } catch (e) {

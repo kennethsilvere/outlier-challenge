@@ -23,7 +23,7 @@ tape('health', async function (t) {
   }
 })
 
-tape('getStudent', async function (t) {
+tape('getStudent with id 43', async function (t) {
   const url = `${endpoint}/student/43`
   try {
     const { data, response } = await jsonist.get(url)
@@ -34,7 +34,7 @@ tape('getStudent', async function (t) {
     }
     t.ok(
       testValidations.validateAgainstStudentData(data),
-      'should have successful healthcheck'
+      'should return data of student with id 34'
     )
     t.end()
   } catch (e) {
@@ -42,18 +42,13 @@ tape('getStudent', async function (t) {
   }
 })
 
-tape('getStudent', async function (t) {
-  const url = `${endpoint}/student/43`
+tape('getStudent with an UNAVAILABLE ID', async function (t) {
+  const url = `${endpoint}/student/9999999999999999999999`
   try {
-    const { data, response } = await jsonist.get(url)
-    if (response.statusCode !== 200) {
-      throw new Error(
-        'Error connecting to sqlite database; did you initialize it by running `npm run init-db`?'
-      )
-    }
+    const { response } = await jsonist.get(url)
     t.ok(
-      testValidations.validateAgainstStudentData(data),
-      'should return the student data for the student of id 43'
+      response.statusCode === 404,
+      'should return a staus of 404 since student id will not be found'
     )
     t.end()
   } catch (e) {
@@ -61,8 +56,8 @@ tape('getStudent', async function (t) {
   }
 })
 
-tape('getStudentGradesReport', async function (t) {
-  const url = `${endpoint}/student/82`
+tape('getStudentGradesReport for student id 82', async function (t) {
+  const url = `${endpoint}/student/82/grades`
   try {
     const { data, response } = await jsonist.get(url)
     if (response.statusCode !== 200) {
@@ -73,6 +68,20 @@ tape('getStudentGradesReport', async function (t) {
     t.ok(
       testValidations.validateAgainstStudentGrades(data),
       'should return the student grades report for the student of id 82'
+    )
+    t.end()
+  } catch (e) {
+    t.error(e)
+  }
+})
+
+tape('getStudentGradesReport for an UNAVAILABLE ID', async function (t) {
+  const url = `${endpoint}/student/9999999999999999999999`
+  try {
+    const { response } = await jsonist.get(url)
+    t.ok(
+      response.statusCode === 404,
+      'should return a staus of 404 since student id will not be found'
     )
     t.end()
   } catch (e) {

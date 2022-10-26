@@ -5,7 +5,6 @@ const studentData = {
   email: 'Ashlee.Koepp64@yahoo.com',
   is_registered: 0,
   is_approved: 1,
-  password_hash: '44a1264db5e181d29232ed455eb99ece3753a93b',
   address: '916 Angela River Suite 584',
   city: 'Gardena',
   state: 'AZ',
@@ -23,7 +22,6 @@ const studentGradesData = {
   email: 'Mallory67@yahoo.com',
   is_registered: 1,
   is_approved: 1,
-  password_hash: 'abc12bf0e808d67e24c846c23b47bcda8aa48e60',
   address: '4656 Arnold Isle Suite 529',
   city: 'Greenville',
   state: 'CO',
@@ -31,7 +29,8 @@ const studentGradesData = {
   phone: '(318) 810-6863 x998',
   created: '1628785884192.0',
   last_login: '1628716593704.0',
-  ip_address: '117.65.36.247'
+  ip_address: '117.65.36.247',
+  grades: { Astronomy: 80, Calculus: 73, Microeconomics: 99 }
 }
 
 const courseStatistics = {
@@ -62,7 +61,7 @@ const courseStatistics = {
   }
 }
 
-function validateAgainstData(testData, data) {
+function validateAgainstData (testData, data) {
   if (!data || (typeof data !== 'object' && data !== testData)) {
     return false
   }
