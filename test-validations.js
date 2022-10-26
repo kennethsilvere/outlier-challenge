@@ -35,14 +35,34 @@ const studentGradesData = {
 }
 
 const courseStatistics = {
-  Calculus: { highestGrade: 100, lowestGrade: 0, averageGrade: 50.09 },
-  Microeconomics: { highestGrade: 100, lowestGrade: 0, averageGrade: 49.81 },
-  Statistics: { highestGrade: 100, lowestGrade: 0, averageGrade: 50.02 },
-  Astronomy: { highestGrade: 100, lowestGrade: 0, averageGrade: 50.04 },
-  Philosophy: { highestGrade: 100, lowestGrade: 0, averageGrade: 50.02 }
+  Astronomy: {
+    highestGrade: 100,
+    lowestGrade: 0,
+    averageGrade: 50.03889013536759
+  },
+  Calculus: {
+    highestGrade: 100,
+    lowestGrade: 0,
+    averageGrade: 50.09270747689165
+  },
+  Microeconomics: {
+    highestGrade: 100,
+    lowestGrade: 0,
+    averageGrade: 49.81138092966023
+  },
+  Philosophy: {
+    highestGrade: 100,
+    lowestGrade: 0,
+    averageGrade: 50.01606355689488
+  },
+  Statistics: {
+    highestGrade: 100,
+    lowestGrade: 0,
+    averageGrade: 50.017376820961566
+  }
 }
 
-function validateAgainstData (testData, data) {
+function validateAgainstData(testData, data) {
   if (!data || (typeof data !== 'object' && data !== testData)) {
     return false
   }

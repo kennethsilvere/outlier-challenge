@@ -62,6 +62,7 @@ async function fillGradesTable () {
       .catch((err) => console.log(err))
   }
   clearInterval(loader)
+  console.log('Done!')
 }
 
 function showLoader () {
