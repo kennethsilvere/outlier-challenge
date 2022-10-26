@@ -1,5 +1,5 @@
-const { knex, grades } = require('./db')
-// const { Worker } = require('worker_threads')
+const { knex } = require('./db')
+const gradesDb = require('./grades_db')
 
 module.exports = {
   getHealth,
@@ -7,8 +7,6 @@ module.exports = {
   getStudentGradesReport,
   getCourseGradesReport
 }
-
-let courses
 
 async function getHealth (req, res, next) {
   try {
@@ -23,6 +21,7 @@ async function getHealth (req, res, next) {
 async function getStudent (req, res, next) {
   try {
     const studentData = await getStudentDataById(req.params.id)
+    delete studentData.password_hash
     return res.status(200).json(studentData)
   } catch (e) {
     console.log(e)
@@ -34,7 +33,21 @@ async function getStudentGradesReport (req, res, next) {
   try {
     const id = req.params.id
     const studentData = await getStudentDataById(id)
-    return mergeWithCourseGradesFromRemoteSource(id, studentData, res)
+    if (!studentData) {
+      return res.status(404).json({ error: 'Student does not exit' })
+    }
+
+    delete studentData.password_hash
+    const studentGrades = await gradesDb('grades')
+      .select('course', 'grade')
+      .where('student_id', studentData.id)
+
+    studentData.grades = {}
+    for (const g of studentGrades) {
+      studentData.grades[g.course] = g.grade
+    }
+    return res.status(200).json(studentData)
+    // return mergeWithCourseGradesFromRemoteSource(id, studentData, res)
   } catch (e) {
     console.log(e)
     return res.status(500).end()
@@ -42,68 +55,30 @@ async function getStudentGradesReport (req, res, next) {
 }
 
 async function getCourseGradesReport (req, res, next) {
-  courses = grades.reduce((group, courseItem) => {
-    const { course } = courseItem
-    group[course] = group[course] ?? []
-    group[course].push(courseItem)
-    return group
-  }, {})
-  setImmediate(() => {
-    return processStatistics().then((d) => {
-      return res.status(200).json(d)
-    })
-  })
+  try {
+    const courseStatistics = await gradesDb('grades')
+      .select('course')
+      .max('grade', { as: 'highestGrade' })
+      .min('grade', { as: 'lowestGrade' })
+      .avg('grade', { as: 'averageGrade' })
+      .groupBy('course')
+
+    const gradesReport = {}
+    for (const c of courseStatistics) {
+      gradesReport[c.course] = {
+        ...c,
+        course: undefined
+      }
+    }
+
+    return res.status(200).json(gradesReport)
+  } catch (e) {
+    console.log(e)
+    return res.status(500).end()
+  }
 }
 
 async function getStudentDataById (id) {
   const studentData = await knex('students').select().where('id', id)
   return studentData[0]
-}
-
-async function mergeWithCourseGradesFromRemoteSource (
-  idFromDB,
-  studentData,
-  res
-) {
-  const courseGrades = {}
-
-  grades.forEach((gradesData) => {
-    idFromDB = +idFromDB
-    const idFromJSON = +gradesData.id
-    if (idFromJSON === idFromDB) {
-      courseGrades[gradesData.course] = gradesData.grade
-    }
-  })
-
-  const studentDataWithGrades = {
-    ...studentData,
-    course_grades: courseGrades
-  }
-  return res.status(200).json(studentDataWithGrades)
-}
-
-function processStatistics () {
-  const courseStatistics = {}
-  function getAverage (courses) {
-    const courseGrades = courses.map((c) => +c.grade)
-    const total = courseGrades.reduce((partialSum, a) => partialSum + a, 0)
-    const avg = (total / courses.length).toFixed(2)
-    return +avg
-  }
-  return new Promise((resolve, reject) => {
-    for (let i = 0; i < Object.keys(courses).length; i++) {
-      const key = Object.keys(courses)[i]
-      setTimeout(() => {
-        courses[key].sort((a, b) => +b.grade - +a.grade)
-        courseStatistics[key] = {
-          highestGrade: courses[key][0].grade,
-          lowestGrade: courses[key][courses[key].length - 1].grade,
-          averageGrade: getAverage(courses[key])
-        }
-      }, 0)
-    }
-    setTimeout(() => {
-      resolve(courseStatistics)
-    }, 0)
-  })
 }
